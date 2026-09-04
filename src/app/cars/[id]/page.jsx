@@ -335,7 +335,6 @@ export default function CarDetailsPage() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onBookingSuccess={() => {
-            fetchCarDetails();
             router.push('/my-bookings');
           }}
         />
