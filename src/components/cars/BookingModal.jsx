@@ -25,8 +25,13 @@ export default function BookingModal({
 
   const dailyPrice = car.dailyRentPrice || 0;
   const driverFeePerDay = 25;
-  const driverTotal = driverNeeded === 'Yes' ? driverFeePerDay * rentalDays : 0;
-  const baseTotal = dailyPrice * rentalDays;
+  const normalizedRentalDays = Math.min(
+    30,
+    Math.max(1, Number(rentalDays) || 1),
+  );
+  const driverTotal =
+    driverNeeded === 'Yes' ? driverFeePerDay * normalizedRentalDays : 0;
+  const baseTotal = dailyPrice * normalizedRentalDays;
   const totalPrice = baseTotal + driverTotal;
 
   const handleSubmit = async (e) => {
@@ -37,13 +42,15 @@ export default function BookingModal({
       return;
     }
 
+    const bookingDays = normalizedRentalDays;
+
     setLoading(true);
 
     try {
       const payload = {
         carId: car._id,
         dailyRentPrice: dailyPrice,
-        rentalDays: Number(rentalDays),
+        rentalDays: bookingDays,
         driverNeeded,
         specialNote:
           specialNote.trim() || 'Standard booking without special notes.',
@@ -61,7 +68,7 @@ export default function BookingModal({
           html: `
             <div style="text-align: left; font-size: 14px; line-height: 1.6;">
               <p><strong>Vehicle:</strong> ${car.carName}</p>
-              <p><strong>Duration:</strong> ${rentalDays} Day(s)</p>
+              <p><strong>Duration:</strong> ${bookingDays} Day(s)</p>
               <p><strong>Driver:</strong> ${driverNeeded === 'Yes' ? 'Chauffeur Included' : 'Self-Drive'}</p>
               <p><strong>Total Price:</strong> <span style="color: #2563eb; font-weight: bold;">${formatCurrency(totalPrice)}</span></p>
               <p style="margin-top: 8px; font-size: 12px; color: #64748b;">A confirmation email has been logged to ${user.email}.</p>
@@ -120,9 +127,12 @@ export default function BookingModal({
               min="1"
               max="30"
               value={rentalDays}
-              onChange={(e) =>
-                setRentalDays(Math.max(1, parseInt(e.target.value) || 1))
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                setRentalDays(
+                  value === '' ? '' : Math.min(30, Math.max(1, Number(value))),
+                );
+              }}
               className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">
@@ -175,14 +185,14 @@ export default function BookingModal({
 
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1 text-xs">
             <div className="flex justify-between text-slate-600 dark:text-slate-400">
-              <span>Vehicle Rate ({rentalDays} days)</span>
+              <span>Vehicle Rate ({normalizedRentalDays} days)</span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
                 {formatCurrency(baseTotal)}
               </span>
             </div>
             {driverNeeded === 'Yes' && (
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Chauffeur Fee ($25 x {rentalDays} d)</span>
+                <span>Chauffeur Fee ($25 x {normalizedRentalDays} d)</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
                   {formatCurrency(driverTotal)}
                 </span>
